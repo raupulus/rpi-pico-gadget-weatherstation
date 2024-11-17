@@ -153,7 +153,7 @@ class RpiPico:
         self.callbacks.clear()
         self.locked = False
 
-    def set_i2c(self, pin_sda, pin_scl, bus=0, frequency=400000):
+    def set_i2c(self, pin_sda, pin_scl, bus=0, frequency=400000, timeout=50000):
         """
         Crea una instancia I2C para la comunicación I2C.
 
@@ -173,7 +173,7 @@ class RpiPico:
         sleep_ms(100)
 
         try:
-            i2c = I2C(bus, sda=Pin(pin_sda), scl=Pin(pin_scl), freq=frequency)
+            i2c = I2C(bus, sda=Pin(pin_sda), scl=Pin(pin_scl), freq=frequency, timeout=timeout)
 
             if bus == 0:
                 self.i2c0 = i2c

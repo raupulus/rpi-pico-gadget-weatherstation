@@ -1,4 +1,7 @@
-# Proyecto: Plantilla básica para comenzar proyectos en Raspberry Pi Pico con Micropython
+# Proyecto: Gadget Estación Meteorológica con Raspberry Pi Pico
+
+WIP: Actualmente en desarrollo inicial
+
 
 El contenido de este repositorio tiene la única finalidad de utilizarse como
 plantilla al crear otros proyectos reutilizando partes que suelo necesitar

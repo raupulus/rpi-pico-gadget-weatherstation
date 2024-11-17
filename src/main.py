@@ -1,6 +1,8 @@
 import gc
+import time
 from time import sleep_ms
 from Models.Api import Api
+from Models.BME680 import *
 from Models.RpiPico import RpiPico
 
 # Importo variables de entorno
@@ -12,58 +14,28 @@ gc.enable()
 DEBUG = env.DEBUG
 
 # Rpi Pico Model Instance
-rpi = RpiPico(ssid=env.AP_NAME, password=env.AP_PASS, debug=DEBUG,
-                     alternatives_ap=env.ALTERNATIVES_AP, hostname=env.HOSTNAME)
+#rpi = RpiPico(ssid=env.AP_NAME, password=env.AP_PASS, debug=DEBUG, alternatives_ap=env.ALTERNATIVES_AP, hostname=env.HOSTNAME)
+rpi = RpiPico(debug=DEBUG)
 
 sleep_ms(100)
 
-# Debug para mostrar el estado del wifi
-rpi.wifi_debug()
-
-# Ejemplo Mostrando temperatura de cpu tras 5 lecturas (+1 al instanciar modelo)
-print('Leyendo temperatura por 1a vez:', str(rpi.get_cpu_temperature()))
-sleep_ms(100)
-print('Leyendo temperatura por 2a vez:', str(rpi.get_cpu_temperature()))
-sleep_ms(100)
-print('Leyendo temperatura por 3a vez:', str(rpi.get_cpu_temperature()))
-sleep_ms(100)
-print('Leyendo temperatura por 4a vez:', str(rpi.get_cpu_temperature()))
-sleep_ms(100)
-print('Leyendo temperatura por 5a vez:', str(rpi.get_cpu_temperature()))
-sleep_ms(100)
-print('Mostrando estadisticas de temperatura para CPU:', str(rpi.get_cpu_temperature_stats()))
-
-sleep_ms(100)
-
-# Ejemplo instanciando SPI en bus 0.
-spi0 = rpi.set_spi(2, 3, 4, 5, 0)
-
-sleep_ms(100)
 
 # Ejemplo instanciando I2C en bus 0.
-i2c0 = rpi.set_i2c(20, 21, 0, 400000)
-address = 0x03 # Dirección de un dispositivo i2c
-# Ya podemos usar nuestro sensor con la dirección almacenada en "address"
+i2c0 = rpi.set_i2c(4, 5, 0, 400000)
+
+print(i2c0)
 
 # Ejemplo escaneando todos los dispositivos encontrados por I2C.
 print('Dispositivos encontrados por I2C:', i2c0.scan())
 
-# Ejemplo asociando un callback al recibir +3.3v en el gpio 2
-#rpi.set_callback_to_pin(2, "LOW", tu_callback)
-rpi.set_callback_to_pin(2, lambda p: print("Se ejecuta el callback"), "LOW")
-
-# Ejemplo leyendo batería externa (¡Cuidado! usa divisor de tensión, max 3,3v)
-rpi.set_external_battery(28)
-rpi.read_external_battery()
-
 sleep_ms(200)
 
 # Preparo la instancia para la comunicación con la API
-api = Api(controller=rpi, url=env.API_URL, path=env.API_PATH,
-          token=env.API_TOKEN, device_id=env.DEVICE_ID, debug=env.DEBUG)
+#api = Api(controller=rpi, url=env.API_URL, path=env.API_PATH, token=env.API_TOKEN, device_id=env.DEVICE_ID, debug=env.DEBUG)
 
 
-# Ejemplo sincronizando reloj RTC
+# Sincronizando reloj RTC
+"""
 sleep_ms(1000)
 
 while not rpi.sync_rtc_time():
@@ -72,6 +44,61 @@ while not rpi.sync_rtc_time():
         print('Intentando Obtener hora RTC de la API')
 
     sleep_ms(30000)
+"""
+
+
+print('break 1')
+bme680 = BME680_I2C(i2c=i2c0, address=0x77, debug=False)
+
+print('break 2')
+
+while True:
+  try:
+    temp = str(round(bme680.temperature, 2)) + ' C'
+    #temp = (bme.temperature) * (9/5) + 32
+    #temp = str(round(temp, 2)) + 'F'
+    
+    hum = str(round(bme680.humidity, 2)) + ' %'
+    
+    pres = str(round(bme680.pressure, 2)) + ' hPa'
+    
+    gas = str(round(bme680.gas/1000, 2)) + ' KOhms'
+
+    print('Temperature:', temp)
+    print('Humidity:', hum)
+    print('Pressure:', pres)
+    print('Gas:', gas)
+    print('-------')
+  except OSError as e:
+    print('Failed to read sensor.')
+ 
+  sleep_ms(5000)
+
+
+"""
+
+
+# change this to match the location's pressure (hPa) at sea level
+bme680.sea_level_pressure = 1013.25
+
+# You will usually have to add an offset to account for the temperature of
+# the sensor. This is usually around 5 degrees but varies by use. Use a
+# separate temperature sensor to calibrate this one.
+temperature_offset = -5
+
+while True:
+    print("\nTemperature: %0.1f C" % (bme680.temperature + temperature_offset))
+    print("Gas: %d ohm" % bme680.gas)
+    print("Humidity: %0.1f %%" % bme680.relative_humidity)
+    print("Pressure: %0.3f hPa" % bme680.pressure)
+    print("Altitude = %0.2f meters" % bme680.altitude)
+
+    time.sleep(1)
+"""
+
+
+
+
 
 # Pausa preventiva al desarrollar (ajustar, pero si usas dos hilos puede ahorrar tiempo por bloqueos de hardware ante errores)
 sleep_ms(3000)
@@ -103,13 +130,6 @@ def thread0 ():
         print('')
         print('Inicia hilo principal (thread0)')
 
-
-    #print("Batería externa:", rpi.read_external_battery())
-
-    print('')
-    print('Termina el primer ciclo del hilo 0')
-    print('')
-
     sleep_ms(10000)
 
 
@@ -119,7 +139,7 @@ while True:
     except Exception as e:
         if env.DEBUG:
             print('Error: ', e)
-    finally:
+
         if env.DEBUG:
             print('Memoria antes de liberar: ', gc.mem_free())
 
@@ -127,5 +147,5 @@ while True:
 
         if env.DEBUG:
             print("Memoria después de liberar:", gc.mem_free())
-
-        sleep_ms(5000)
+    finally:
+        sleep_ms(10000)
