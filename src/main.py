@@ -48,14 +48,15 @@ while not rpi.sync_rtc_time():
 
 
 print('break 1')
-bme680 = BME680_I2C(i2c=i2c0, address=0x77, debug=False)
+bme680 = BME680_I2C(i2c=i2c0, address=0x77, debug=False,
+                    temperature_offset=-1)
 
 print('break 2')
 
 while True:
   try:
     temp = str(round(bme680.temperature, 2)) + ' C'
-    #temp = (bme.temperature) * (9/5) + 32
+    #temp = (bme680.temperature) * (9/5) + 32
     #temp = str(round(temp, 2)) + 'F'
     
     hum = str(round(bme680.humidity, 2)) + ' %'
@@ -67,7 +68,10 @@ while True:
     print('Temperature:', temp)
     print('Humidity:', hum)
     print('Pressure:', pres)
+    print('Altitude:', bme680.altitude)
+    print('Gas ready:', bme680.is_gas_ready())
     print('Gas:', gas)
+    print('Air Quality:', bme680.air_quality())
     print('-------')
   except OSError as e:
     print('Failed to read sensor.')
