@@ -244,9 +244,10 @@ class BME680:
         if elapsed_time > 5 * 60 * 1000:  # 5 minutos en milisegundos
             # Si han pasado más de 5 minutos
             return True
+
         return False
 
-    def air_quality (self, Rmin=100, Rmax=500):
+    def air_quality (self, Rmin=100, Rmax=500) -> int:
         """
         Convierte la resistencia medida del gas en un índice de calidad del aire (IAQ) en porcentaje.
 
