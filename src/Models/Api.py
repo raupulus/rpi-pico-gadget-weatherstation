@@ -4,6 +4,8 @@
 import urequests
 import ujson
 
+from Models.WeatherStation import WeatherStation
+
 
 def get_time_utc ():
     """Obtiene la hora actual en formato UTC desde la API 'worldtimeapi.org'."""
@@ -59,6 +61,50 @@ class Api:
         self.URL_PATH = path
         self.CONTROLLER = controller
         self.DEBUG = debug
+        self.last_upload_time = 0
+
+
+
+    def upload_weather_data(self, data: WeatherStation.data):
+        payload = {
+            "hardware_device_id": self.DEVICE_ID,
+            "temperature": data['temperature']['current'],
+            "humidity": data['humidity']['current'],
+            "pressure": data['pressure']['current'],
+            "gas_resistance": data['gas']['current'],
+            "air_quality": data['air_quality']['current'],
+            "eco2": data['co2']['current'],
+            "tvoc": data['tvoc']['current'],
+        }
+
+        # Eliminar claves con valor None
+        payload = { k: v for k, v in payload.items() if v is not None }
+
+        try:
+            headers = {
+                "Authorization": "Bearer " + self.TOKEN,
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+
+            url = self.URL + '/' + self.URL_PATH
+
+            response = urequests.post(url, headers=headers, json=payload)
+            # data = ujson.loads(response.text)
+
+            if self.DEBUG:
+                print('Respuesta de la API:', response.text)
+
+            if response.status_code == 201:
+                return True
+
+        except Exception as e:
+            if self.DEBUG:
+                print("Error al obtener los datos de la api: ", e)
+
+            return False
+
+        return False
 
     def get_data_from_api (self):
         try:
@@ -69,7 +115,7 @@ class Api:
                 "Device-Id": str(self.DEVICE_ID)
             }
 
-            url = self.URL + self.URL_PATH
+            url = self.URL + '/' + self.URL_PATH
 
             response = urequests.get(url, headers=headers)
 
