@@ -84,11 +84,6 @@ for i in range(10):
 
 ws.reset_stats()
 
-while True:
-    ws.read_all()
-    ws.debug()
-    sleep_ms(5000)
-
 # Pantalla principal 128x160px
 cs = Pin(13, Pin.OUT)
 reset = Pin(9, Pin.OUT)
@@ -133,10 +128,23 @@ def thread0 ():
         ws.debug()
 
     if API_UPLOAD:
-        led3.on()
-        api.upload_weather_data(ws.data)
-        ws.reset_stats()
-        led3.off()
+        current_time = time.time()
+
+        if current_time - api.last_upload_time >= 60:
+            led3.on()
+
+            if DEBUG:
+                print('Subiendo datos a la API')
+
+            api.upload_weather_data(ws.data)
+            api.last_upload_time = current_time
+
+            if DEBUG:
+                print('Reiniciando estadísticas para nueva fase de trabajo')
+
+            ws.reset_stats()
+
+            led3.off()
 
     led2.off()
 

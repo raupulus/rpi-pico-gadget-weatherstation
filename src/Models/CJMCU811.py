@@ -29,7 +29,7 @@ class CCS811:
     Controlador del sensor CCS811 para medir la concentración de CO2 y compuestos orgánicos volátiles (TVOC).
     """
 
-    def __init__(self, i2c: I2C, addr: int = CCS811_ADDR):
+    def __init__(self, i2c: I2C, addr: int = CCS811_ADDR, debug=False) -> None:
         """
         Inicializa el sensor CCS811.
 
@@ -39,8 +39,9 @@ class CCS811:
         self.i2c = i2c
         self.addr = addr
         self.tVOC: int = 0
-        self.CO2: int = 0
+        self.CO2: int = 420
         self.start_time: float = time.time()  # Guardamos el tiempo de inicio para comprobar el timeout de 20 minutos
+        self.DEBUG = debug
 
         # Comprobamos que el sensor esté disponible en el bus I2C
         devices = i2c.scan()
@@ -186,4 +187,5 @@ class CCS811:
         :return: `True` si los datos están listos y han pasado más de 20 minutos, `False` en caso contrario.
         """
         elapsed_time = time.time() - self.start_time
-        return self.data_available() and elapsed_time > 1200  # 20 minutos en segundos
+
+        return self.data_available() and elapsed_time > 1200  # 20 minutos = 1200

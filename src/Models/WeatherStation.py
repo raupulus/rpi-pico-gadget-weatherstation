@@ -1,7 +1,9 @@
-
 from Models.BME680 import BME680_I2C, BME680  # Import BME680 for air_quality reading
 from Models.CJMCU811 import CCS811
 from Models.VEML6070 import VEML6070
+
+from time import sleep_ms
+import time
 
 
 class WeatherStation:
@@ -80,7 +82,8 @@ class WeatherStation:
         self.bme680 = BME680_I2C(i2c=rpi.i2c0, address=0x77, debug=False, temperature_offset=-1)
 
         # Sensor CO2 y TVOC
-        self.c = CCS811(i2c=rpi.i2c0, addr=0x5A)
+        self.c = CCS811(i2c=rpi.i2c0, addr=0x5A, debug=debug)
+        self.c_last_calibrate = time.time()
 
         # Sensor UV
         self.uv = VEML6070(rpi.i2c1)
@@ -137,16 +140,20 @@ class WeatherStation:
             temperature = self.data["temperature"]["current"]
             humidity = self.data["humidity"]["current"]
 
-            if temperature and humidity:
-                self.c.put_envdata(humidity=humidity, temp=temperature)
+            if self.c.is_ready():
+                current_time = time.time()
+                if temperature and humidity and ( current_time - self.c_last_calibrate) >= 300:
+                    self.c.put_envdata(humidity=humidity, temp=temperature)
+                    self.c_last_calibrate = current_time
 
-            self.c.read_sensor_data()
+                    sleep_ms(100)
 
-            co2 = self.c.CO2
-            tVOC = self.c.tVOC
+                self.c.read_sensor_data()
+                sleep_ms(50)
 
-            if self.c.is_ready and co2 is not None and tVOC is not None:
-            #if co2 and tVOC:
+                co2 = self.c.CO2
+                tVOC = self.c.tVOC
+
                 self.data["co2"]["current"] = co2
                 self.data["tvoc"]["current"] = tVOC
                 self.data["co2"]["reads"] = self.data["co2"]["reads"] + 1 if self.data["co2"]["reads"] else 1
