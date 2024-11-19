@@ -2,121 +2,111 @@ import gc
 import time
 from time import sleep_ms
 from Models.Api import Api
-from Models.BME680 import *
+from Models.BME680 import BME680_I2C
+from Models.CJMCU811 import CCS811
 from Models.RpiPico import RpiPico
+from Models.VEML6070 import VEML6070
+from Models.DisplayST7735_128x160 import DisplayST7735_128x160
+from machine import Pin, SPI
 
 # Importo variables de entorno
 import env
+from Models.WeatherStation import WeatherStation
+from env import API_UPLOAD
 
 # Habilito recolector de basura
 gc.enable()
 
 DEBUG = env.DEBUG
+API_UPLOAD = API_UPLOAD
 
 # Rpi Pico Model Instance
-#rpi = RpiPico(ssid=env.AP_NAME, password=env.AP_PASS, debug=DEBUG, alternatives_ap=env.ALTERNATIVES_AP, hostname=env.HOSTNAME)
-rpi = RpiPico(debug=DEBUG)
+if API_UPLOAD:
+    rpi = RpiPico(ssid=env.AP_NAME, password=env.AP_PASS, debug=DEBUG, alternatives_ap=env.ALTERNATIVES_AP, hostname=env.HOSTNAME)
+
+    # Sincronizando reloj RTC
+    """
+    sleep_ms(1000)
+
+    while not rpi.sync_rtc_time():
+
+        if env.DEBUG:
+            print('Intentando Obtener hora RTC de la API')
+
+        sleep_ms(30000)
+    """
+
+    # Preparo la instancia para la comunicación con la API
+    api = Api(controller=rpi, url=env.API_URL, path=env.API_PATH, token=env.API_TOKEN, device_id=env.DEVICE_ID, debug=env.DEBUG)
+else:
+    rpi = RpiPico(debug=DEBUG)
+
+rpi.led_on()
+
+sleep_ms(100)
+
+# Led 1 Encendido
+led1 = Pin(28, Pin.OUT)
+#led1.on()
+
+# Led 2 Indica ciclo de trabajo
+led2 = Pin(27, Pin.OUT)
+
+# Led 3 Indica subida a la API
+led3 = Pin(26, Pin.OUT)
+
+sleep_ms(100)
+
+# Ejemplo instanciando I2C en bus 0.
+i2c0 = rpi.set_i2c(4, 5, 0, 100000)
+i2c1 = rpi.set_i2c(14, 15, 1, 400000)
+
+
+if DEBUG:
+    print(i2c0)
+    print(i2c1)
+
+    # Ejemplo escaneando todos los dispositivos encontrados por I2C.
+    print('Dispositivos encontrados por I2C0:', i2c0.scan())
+    print('Dispositivos encontrados por I2C1:', i2c1.scan())
 
 sleep_ms(100)
 
 
-# Ejemplo instanciando I2C en bus 0.
-i2c0 = rpi.set_i2c(4, 5, 0, 400000)
+ws = WeatherStation(debug=DEBUG, rpi=rpi)
 
-print(i2c0)
+sleep_ms(100)
 
-# Ejemplo escaneando todos los dispositivos encontrados por I2C.
-print('Dispositivos encontrados por I2C:', i2c0.scan())
+# Realizo 10 lecturas de calibración
+for i in range(10):
+    ws.read_all()
+    sleep_ms(1000)
 
-sleep_ms(200)
-
-# Preparo la instancia para la comunicación con la API
-#api = Api(controller=rpi, url=env.API_URL, path=env.API_PATH, token=env.API_TOKEN, device_id=env.DEVICE_ID, debug=env.DEBUG)
-
-
-# Sincronizando reloj RTC
-"""
-sleep_ms(1000)
-
-while not rpi.sync_rtc_time():
-
-    if env.DEBUG:
-        print('Intentando Obtener hora RTC de la API')
-
-    sleep_ms(30000)
-"""
-
-
-print('break 1')
-bme680 = BME680_I2C(i2c=i2c0, address=0x77, debug=False,
-                    temperature_offset=-1)
-
-print('break 2')
+ws.reset_stats()
 
 while True:
-  try:
-    temp = str(round(bme680.temperature, 2)) + ' C'
-    #temp = (bme680.temperature) * (9/5) + 32
-    #temp = str(round(temp, 2)) + 'F'
-    
-    hum = str(round(bme680.humidity, 2)) + ' %'
-    
-    pres = str(round(bme680.pressure, 2)) + ' hPa'
-    
-    gas = str(round(bme680.gas/1000, 2)) + ' KOhms'
+    ws.read_all()
+    ws.debug()
+    sleep_ms(5000)
 
-    print('Temperature:', temp)
-    print('Humidity:', hum)
-    print('Pressure:', pres)
-    print('Altitude:', bme680.altitude)
-    print('Gas ready:', bme680.is_gas_ready())
-    print('Gas:', gas)
-    print('Air Quality:', bme680.air_quality())
-    print('-------')
-  except OSError as e:
-    print('Failed to read sensor.')
- 
-  sleep_ms(5000)
+# Pantalla principal 128x160px
+cs = Pin(13, Pin.OUT)
+reset = Pin(9, Pin.OUT)
 
+spi1 = SPI(1, baudrate=8000000, polarity=0, phase=0,
+           firstbit=SPI.MSB, sck=Pin(10), mosi=Pin(11), miso=None)
 
-"""
-
-
-# change this to match the location's pressure (hPa) at sea level
-bme680.sea_level_pressure = 1013.25
-
-# You will usually have to add an offset to account for the temperature of
-# the sensor. This is usually around 5 degrees but varies by use. Use a
-# separate temperature sensor to calibrate this one.
-temperature_offset = -5
-
-while True:
-    print("\nTemperature: %0.1f C" % (bme680.temperature + temperature_offset))
-    print("Gas: %d ohm" % bme680.gas)
-    print("Humidity: %0.1f %%" % bme680.relative_humidity)
-    print("Pressure: %0.3f hPa" % bme680.pressure)
-    print("Altitude = %0.2f meters" % bme680.altitude)
-
-    time.sleep(1)
-"""
-
-
-
-
+display = DisplayST7735_128x160(spi1, rst=9, ce=13, dc=12, btn_display_on=8, orientation=env.DISPLAY_ORIENTATION, debug=env.DEBUG, timeout=env.DISPLAY_TIMEOUT)
+display.displayFooterInfo()
+sleep_ms(display.DELAY)
+display.tableCreate(0, demo=True)
 
 # Pausa preventiva al desarrollar (ajustar, pero si usas dos hilos puede ahorrar tiempo por bloqueos de hardware ante errores)
 sleep_ms(3000)
 
-
 def thread1 ():
     """
     Segundo hilo.
-
-    En este hilo colocamos otras operaciones con cuidado frente a la
-    concurrencia.
-
-    Recomiendo utilizar sistemas de bloqueo y pruebas independientes con las
-    funcionalidades que vayas a usar en paralelo. Se puede romper la ejecución.
     """
 
     if env.DEBUG:
@@ -134,7 +124,21 @@ def thread0 ():
         print('')
         print('Inicia hilo principal (thread0)')
 
-    sleep_ms(10000)
+    led2.on()
+
+    # Se leen todos los sensores
+    ws.read_all()
+
+    if DEBUG:
+        ws.debug()
+
+    if API_UPLOAD:
+        led3.on()
+        api.upload_weather_data(ws.data)
+        ws.reset_stats()
+        led3.off()
+
+    led2.off()
 
 
 while True:
