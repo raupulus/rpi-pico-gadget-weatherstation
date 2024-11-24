@@ -92,9 +92,12 @@ spi1 = SPI(1, baudrate=8000000, polarity=0, phase=0,
            firstbit=SPI.MSB, sck=Pin(10), mosi=Pin(11), miso=None)
 
 display = DisplayST7735_128x160(spi1, rst=9, ce=13, dc=12, btn_display_on=8, orientation=env.DISPLAY_ORIENTATION, debug=env.DEBUG, timeout=env.DISPLAY_TIMEOUT)
+display.displayHeadInfo(wifi_status=rpi.wifi_status())
 display.displayFooterInfo()
 sleep_ms(display.DELAY)
-display.tableCreate(0, demo=True)
+#display.tableCreate(0, demo=True)
+
+
 
 # Pausa preventiva al desarrollar (ajustar, pero si usas dos hilos puede ahorrar tiempo por bloqueos de hardware ante errores)
 sleep_ms(3000)
@@ -126,6 +129,12 @@ def thread0 ():
 
     if DEBUG:
         ws.debug()
+
+    localtime = rpi.get_rtc_local_time_string()
+
+    if localtime:
+        display.displayFooterInfo(center=localtime)
+
 
     if API_UPLOAD:
         current_time = time.time()

@@ -82,7 +82,7 @@ class DisplayST7735_128x160():
             'w': 5,  # Ancho de la letra
             'font': 'font5x7.fnt',  # Fuente
             'line_height': 9,  # Alto de la línea
-            'font_padding': 1  # Espacio entre carácteres
+            'font_padding': 1  # Espacio entre carácteres, 1 por defecto
         },
     }
 
@@ -288,7 +288,7 @@ class DisplayST7735_128x160():
             pixels_x_counter += font_width + font['font_padding']
 
 
-    def displayHeadInfo(self, wifi_status, voltage):
+    def displayHeadInfo(self, wifi_status):
         """
         La primera fila de la pantalla será para mostrar información del estado en general. Esta información contempla:
         - Estado de la conexión wifi
@@ -312,40 +312,31 @@ class DisplayST7735_128x160():
         color = self.COLORS['yellow1']
         background = self.COLORS['red3']
 
-        ## Dibujar fondo de dos líneas
-        self.display.draw_block(0, 0, self.DISPLAY_WIDTH, font['line_height'] * 2, background)
+        ## Dibujar fondo de una línea
+        self.display.draw_block(0, 0, self.DISPLAY_WIDTH, font['line_height'], background)
 
         """
-        INFORMACIÓN DEL VOLTAJE
+        NOMBRE
         """
-        block_voltaje_width = 8 # Ancho del bloque carácteres para la información del voltaje
+        center_content = ' WEATHER STATION'
 
-        voltage_content = str(round(voltage, 2)) + 'V'
-
-        self.printByPos(0, 0, voltage_content, block_voltaje_width, color, background)
+        self.printByPos(0, 0, center_content, len(center_content),
+                        color, background)
 
         """
         INFORMACIÓN DEL WIFI
         """
-        block_wireless_width = 9 # Ancho del bloque carácteres para la información del wifi
+        block_wireless_width = 7 # Ancho del bloque carácteres para la información del wifi
 
         # Posición del comienzo para el estado del wifi. Calculado desde la derecha de la pantalla
         pos_wireless_start = max_line_chars - block_wireless_width
         wifi_on = 'ON' if wifi_status >= 3 else 'OFF'
-        content = '   W: ' + wifi_on # W: ON | W: OFF
+        content = ' W: ' + wifi_on # W: ON | W: OFF
 
         self.printByPos(0, pos_wireless_start, content, block_wireless_width, color, background)
 
 
-        """
-        INFORMACIÓN EN EL CENTRO
-        """
-        center_content = '     RASPBERRY PI PICO'
-        start_x = floor((max_line_chars/2) - (len(center_content) / 2))
-
-        self.printByPos(1, start_x, center_content, len(center_content), color, background)
-
-    def displayFooterInfo(self, center = None):
+    def displayFooterInfo(self, center = 'WEATHER STATION'):
 
         while self.locked:
             if self.DEBUG:
@@ -363,15 +354,7 @@ class DisplayST7735_128x160():
         """
         INFORMACIÓN EN EL CENTRO
         """
-
-        if not center:
-            center_content = 'MONITOR DE ENERGIA'
-
-        ## TODO: Usar sensor RTC para obtener timestamps?
-        #time_content = '07/11/2023 16:31:14'
-        center_content = 'MONITOR DE ENERGIA'
-
-        start_x = floor((max_line_chars/2) - (len(center_content) / 2))
+        start_x = floor((max_line_chars/2) - (len(center) / 2))
 
         line = floor((self.DISPLAY_HEIGHT / font['line_height']) - 1)
 
@@ -389,7 +372,7 @@ class DisplayST7735_128x160():
         finally:
             self.locked = False
 
-        self.printByPos(line, start_x, center_content, len(center_content), color, background)
+        self.printByPos(line, start_x, center, len(center), color, background)
 
     def tableCreate(self, sensorsQuantity = None, demo = False):
         """
