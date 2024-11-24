@@ -96,7 +96,7 @@ display.displayHeadInfo(wifi_status=rpi.wifi_status())
 display.displayFooterInfo()
 sleep_ms(display.DELAY)
 #display.tableCreate(0, demo=True)
-
+display.grid_create()
 
 
 # Pausa preventiva al desarrollar (ajustar, pero si usas dos hilos puede ahorrar tiempo por bloqueos de hardware ante errores)

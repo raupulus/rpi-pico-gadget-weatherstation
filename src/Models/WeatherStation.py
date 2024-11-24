@@ -71,6 +71,13 @@ class WeatherStation:
             "avg": None,
             "current": None,
             "reads": None
+        },
+        "sound": {
+            "max": None,
+            "min": None,
+            "avg": None,
+            "current": None,
+            "reads": None
         }
     }
 
