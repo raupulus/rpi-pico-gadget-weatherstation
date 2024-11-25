@@ -674,6 +674,11 @@ class RpiPico:
         return local_time_tuple[
                :6]  # Devolver solo año, mes, día, hora, minuto, segundo
 
+    def get_rtc_local_time_string_spanish (self):
+        """Obtiene la hora local desde el RTC del Raspberry Pi Pico en formato string."""
+        local_time = self.get_rtc_local_time()
+        return (f"{local_time[2]:02d}/{local_time[1]:02d}/{local_time[0]:04d} {local_time[3]:02d}:{local_time[4]:02d}")
+
     def get_rtc_local_time_string (self):
         """Obtiene la hora local desde el RTC del Raspberry Pi Pico en formato string."""
         local_time = self.get_rtc_local_time()

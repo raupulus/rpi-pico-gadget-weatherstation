@@ -112,11 +112,14 @@ def thread1 ():
         print('Inicia hilo principal (thread1)')
 
 
+last_minute = 0
+
 def thread0 ():
     """
     Primer hilo, flujo principal de la aplicación.
     En este hilo colocamos toda la lógica principal de funcionamiento.
     """
+    global last_minute
 
     if env.DEBUG:
         print('')
@@ -130,11 +133,15 @@ def thread0 ():
     if DEBUG:
         ws.debug()
 
-    localtime = rpi.get_rtc_local_time_string()
+    localtime = rpi.get_rtc_local_time()
+    minute = localtime[4]
+    localtime_str = rpi.get_rtc_local_time_string_spanish()
 
-    if localtime:
-        display.displayFooterInfo(center=localtime)
+    if localtime_str and minute != last_minute:
+        last_minute = minute
+        display.displayFooterInfo(center=localtime_str)
 
+    display.grid_update()
 
     if API_UPLOAD:
         current_time = time.time()

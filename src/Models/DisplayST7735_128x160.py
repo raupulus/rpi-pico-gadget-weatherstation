@@ -376,73 +376,96 @@ class DisplayST7735_128x160():
 
         self.printByPos(line, start_x, center, len(center), color, background)
 
-    def grid_create(self):
+    def grid_create (self):
         """
         Crea el grid de 3x3 cuadrados dónde se colocarán los elementos.
-        Esta cuadrícula se encuentra en el centro de la pantalla y tiene un
+        La cuadrícula se encuentra en el centro de la pantalla con un
         margen superior e inferior de 9px para respetar el encabezado y el
         footer.
-        En la primera fila de 3 cuadrados, se muestra temperatura, humedad y
-        presión.
-        En la segunda fila se muestra calidad del aire, CO2 y tVOC.
-        En la tercera fila se muestra cantidad de luz, índice UV y volumen de sonido.
-        :return:
         """
+        cell_width = self.DISPLAY_WIDTH // 3
+        cell_height = (
+                                  self.DISPLAY_HEIGHT - 18) // 3  # 18px for header and footer
+        bg_color = self.COLORS['black']
 
+        # Iterate over 3 rows and 3 columns
+        for row in range(3):
+            for col in range(3):
+                x = col * cell_width
+                y = row * cell_height + 9  # Adding the 9px top margin
+
+                self.display.draw_block(x, y, cell_width, cell_height, bg_color)
+
+                img_width = 15
+                img_height = 30
+                img_y = y + (cell_height - img_height) // 2
+
+                # Placeholder for the image
+                self.display.draw_block(x, img_y, img_width, img_height,
+                                        self.COLORS['gray4'])
+
+    def grid_update (self):
+        """
+        Actualiza los datos en el grid de 3x3 cuadrados en el centro de la pantalla.
+        """
         data = WeatherStation.data
 
         if not data:
             return
 
-
         cell_width = self.DISPLAY_WIDTH // 3
-        cell_height = (self.DISPLAY_HEIGHT - 18) // 3 # 18px for header and footer
-        img_width = 15
-        img_height = 30
+        cell_height = (
+                                  self.DISPLAY_HEIGHT - 18) // 3  # 18px for header and footer
         margin = 3
 
         font = self.FONTS['normal']
         text_color = self.COLORS['white']
         bg_color = self.COLORS['black']
 
+        font_total_height = font['line_height']
+        total_text_height = 2 * font_total_height  # For two lines of text
+
+        # Calculate vertical offset to vertically center the text
+        vertical_offset = (cell_height - total_text_height) // 2
+
         # Iterate over 3 rows and 3 columns
         for row in range(3):
             if row == 0:
-                columns = ['temperature', 'humidity', 'pressure']
+                columns = ['temperature', 'air_quality', 'light']
             elif row == 1:
-                columns = ['air_quality', 'co2', 'tvoc']
+                columns = ['humidity',  'co2', 'uv']
             elif row == 2:
-                columns = ['light', 'uv', 'sound']
+                columns = ['pressure', 'tvoc', 'sound']
             else:
                 continue
 
             for col in range(3):
                 stats = data.get(columns[col])
                 value = stats.get('current')
-                #unit = data['unit']
-                unit = '%'
+                unit = stats.get('unit')
+
+                if isinstance(value, float):
+                    if value > 999.9:
+                        value = int(value)
+                    else:
+                        value = round(value, 1)
+                elif value is None:
+                    value = '-'
+
 
                 x = col * cell_width
-                y = row * cell_height + 9  # Adding the 9px top margin
+                y = row * cell_height + 9 + vertical_offset  # Adding 9px top margin and centering text vertically
 
-                self.display.draw_block(x, y, cell_width, cell_height, bg_color)
+                text_x = x + 15 + margin  # Adjust x position based on image width (15px) and margin
 
-                img_y = y + (cell_height - img_height) // 2
-
-                text_x = x + img_width + margin
-                text_y = img_y
-
-                # For simplicity, let's use a placeholder for the image
-                self.display.draw_block(x, img_y, img_width, img_height, self.COLORS['gray4'])
-
-                self.printByPos((y // font['line_height']), (text_x // (font[
-                                                                            'w'] + font['font_padding'])), value, None, text_color, bg_color)
-                self.printByPos((y // font['line_height']) + 1, (text_x // (
-                        font['w'] + font['font_padding'])), unit, None,
-                                text_color, bg_color)
-
-    def grid_update(self):
-        pass
+                self.printByPos(y // font['line_height'],
+                                text_x // (font['w'] + font['font_padding']),
+                                value,
+                                None, text_color, bg_color)
+                self.printByPos((y // font['line_height']) + 1,
+                                text_x // (font['w'] + font['font_padding']),
+                                unit,
+                                None, text_color, bg_color)
 
 
 

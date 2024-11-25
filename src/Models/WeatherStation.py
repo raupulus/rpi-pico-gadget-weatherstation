@@ -13,49 +13,56 @@ class WeatherStation:
             "min": None,
             "avg": None,
             "current": None,
-            "reads": None
+            "reads": None,
+            "unit": "%"
         },
         "temperature": {
             "max": None,
             "min": None,
             "avg": None,
             "current": None,
-            "reads": None
+            "reads": None,
+            "unit": "C"
         },
         "humidity": {
             "max": None,
             "min": None,
             "avg": None,
             "current": None,
-            "reads": None
+            "reads": None,
+            "unit": "%"
         },
         "pressure": {
             "max": None,
             "min": None,
             "avg": None,
             "current": None,
-            "reads": None
+            "reads": None,
+            "unit": "mbar"
         },
         "gas": {
             "max": None,
             "min": None,
             "avg": None,
             "current": None,
-            "reads": None
+            "reads": None,
+            "unit": "ohms"
         },
         "co2": {
             "max": None,
             "min": None,
             "avg": None,
             "current": None,
-            "reads": None
+            "reads": None,
+            "unit": "ppm"
         },
         "tvoc": {
             "max": None,
             "min": None,
             "avg": None,
             "current": None,
-            "reads": None
+            "reads": None,
+            "unit": "ppb"
         },
         "uv": {
             "max": None,
@@ -63,21 +70,24 @@ class WeatherStation:
             "avg": None,
             "current": None,
             "risk_level": None,
-            "reads": None
+            "reads": None,
+            "unit": "index"
         },
         "light": {
             "max": None,
             "min": None,
             "avg": None,
             "current": None,
-            "reads": None
+            "reads": None,
+            "unit": "lux"
         },
         "sound": {
             "max": None,
             "min": None,
             "avg": None,
             "current": None,
-            "reads": None
+            "reads": None,
+            "unit": "dB"
         }
     }
 
@@ -190,7 +200,8 @@ class WeatherStation:
     def reset_stats(self):
         for key in self.data:
             for subkey in self.data[key]:
-                self.data[key][subkey] = None
+                if subkey is not 'unit':
+                    self.data[key][subkey] = None
 
     def debug(self):
         print('Temperature:', self.data.get('temperature').get('current'))
