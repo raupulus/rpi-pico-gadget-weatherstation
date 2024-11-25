@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-from math import floor
+from math import floor, ceil
 from time import time, sleep_ms
 from Lib.ST7735_Small import ST7735
 from machine import Pin
@@ -376,6 +376,16 @@ class DisplayST7735_128x160():
 
         self.printByPos(line, start_x, center, len(center), color, background)
 
+
+    def load_bmp(self, path, x, y, width, height):
+        def load_bmp (filename):
+            with open(filename, 'rb') as f:
+                return f.read()
+
+        image = load_bmp(path)
+
+        self.display.draw_bmp(x, y, width, height, image)
+
     def grid_create (self):
         """
         Crea el grid de 3x3 cuadrados dónde se colocarán los elementos.
@@ -401,8 +411,10 @@ class DisplayST7735_128x160():
                 img_y = y + (cell_height - img_height) // 2
 
                 # Placeholder for the image
-                self.display.draw_block(x, img_y, img_width, img_height,
-                                        self.COLORS['gray4'])
+                #self.display.draw_block(x, img_y, img_width, img_height, self.COLORS['gray4'])
+
+                self.load_bmp('/images/temperature.rgb565', x, img_y,
+                              img_width, img_height)
 
     def grid_update (self):
         """
@@ -416,24 +428,25 @@ class DisplayST7735_128x160():
         cell_width = self.DISPLAY_WIDTH // 3
         cell_height = (
                                   self.DISPLAY_HEIGHT - 18) // 3  # 18px for header and footer
-        margin = 3
+        margin = 1
+        img_width = 15
 
         font = self.FONTS['normal']
         text_color = self.COLORS['white']
         bg_color = self.COLORS['black']
 
         font_total_height = font['line_height']
-        total_text_height = 2 * font_total_height  # For two lines of text
+        total_text_height = 2 * font_total_height  # Para dos líneas de texto
 
-        # Calculate vertical offset to vertically center the text
+        # Calcular el desplazamiento vertical para centrar el texto verticalmente
         vertical_offset = (cell_height - total_text_height) // 2
 
-        # Iterate over 3 rows and 3 columns
+        # Iterar sobre 3 filas y 3 columnas
         for row in range(3):
             if row == 0:
                 columns = ['temperature', 'air_quality', 'light']
             elif row == 1:
-                columns = ['humidity',  'co2', 'uv']
+                columns = ['humidity', 'co2', 'uv']
             elif row == 2:
                 columns = ['pressure', 'tvoc', 'sound']
             else:
@@ -452,27 +465,44 @@ class DisplayST7735_128x160():
                 elif value is None:
                     value = '-'
 
+                # Asegúrate de que 'value' sea una cadena
+                if not isinstance(value, str):
+                    value = str(value)
+
+                # Asegúrate de que 'unit' sea una cadena
+                if not isinstance(unit, str):
+                    unit = str(unit)
+
+                # Centramos las cadenas a 5 caracteres
+                value = value.center(5)
+                unit = unit.center(5)
 
                 x = col * cell_width
-                y = row * cell_height + 9 + vertical_offset  # Adding 9px top margin and centering text vertically
+                y = row * cell_height + 9 + vertical_offset  # Añadiendo margen superior de 9px y centrando el texto verticalmente
 
-                text_x = x + 15 + margin  # Adjust x position based on image width (15px) and margin
+                text_x = x + img_width + margin  # Ajustar la posición x en base al ancho de la imagen y el margen de manera uniforme para todas las columnas
 
-                self.printByPos(y // font['line_height'],
-                                text_x // (font['w'] + font['font_padding']),
-                                value,
-                                None, text_color, bg_color)
-                self.printByPos((y // font['line_height']) + 1,
-                                text_x // (font['w'] + font['font_padding']),
-                                unit,
-                                None, text_color, bg_color)
+                text_pos_x = ceil(text_x // (font['w'] + (font[
+                                                               'font_padding'] *
+                                                     2))) + margin
 
 
-
-
-
-
-
+                self.printByPos(
+                    y // font['line_height'],
+                    text_pos_x,
+                    value,
+                    None,
+                    text_color,
+                    bg_color
+                )
+                self.printByPos(
+                    (y // font['line_height']) + 1,
+                    text_pos_x,
+                    unit,
+                    None,
+                    text_color,
+                    bg_color
+                )
 
     def tableCreate(self, sensorsQuantity = None, demo = False):
         """

@@ -71,7 +71,7 @@ class WeatherStation:
             "current": None,
             "risk_level": None,
             "reads": None,
-            "unit": "index"
+            "unit": "uv"
         },
         "light": {
             "max": None,
