@@ -398,9 +398,24 @@ class DisplayST7735_128x160():
                                   self.DISPLAY_HEIGHT - 18) // 3  # 18px for header and footer
         bg_color = self.COLORS['black']
 
+        data_images = WeatherStation.data_images
+
         # Iterate over 3 rows and 3 columns
         for row in range(3):
+
+            if row == 0:
+                columns = ['temperature', 'air_quality', 'light']
+            elif row == 1:
+                columns = ['humidity', 'co2', 'uv']
+            elif row == 2:
+                columns = ['pressure', 'tvoc', 'sound']
+            else:
+                continue
+
             for col in range(3):
+                images = data_images.get(columns[col])
+                image = images.get('medium')
+
                 x = col * cell_width
                 y = row * cell_height + 9  # Adding the 9px top margin
 
@@ -413,8 +428,7 @@ class DisplayST7735_128x160():
                 # Placeholder for the image
                 #self.display.draw_block(x, img_y, img_width, img_height, self.COLORS['gray4'])
 
-                self.load_bmp('/images/temperature.rgb565', x, img_y,
-                              img_width, img_height)
+                self.load_bmp(image, x, img_y, img_width, img_height)
 
     def grid_update (self):
         """
@@ -430,6 +444,7 @@ class DisplayST7735_128x160():
                                   self.DISPLAY_HEIGHT - 18) // 3  # 18px for header and footer
         margin = 1
         img_width = 15
+        img_height = 30  # Assumed height based on 'grid_create'
 
         font = self.FONTS['normal']
         text_color = self.COLORS['white']
@@ -438,8 +453,8 @@ class DisplayST7735_128x160():
         font_total_height = font['line_height']
         total_text_height = 2 * font_total_height  # Para dos líneas de texto
 
-        # Calcular el desplazamiento vertical para centrar el texto verticalmente
-        vertical_offset = (cell_height - total_text_height) // 2
+        data_ranges = WeatherStation.data_ranges
+        data_images = WeatherStation.data_images
 
         # Iterar sobre 3 filas y 3 columnas
         for row in range(3):
@@ -457,13 +472,25 @@ class DisplayST7735_128x160():
                 value = stats.get('current')
                 unit = stats.get('unit')
 
+                ranges = data_ranges.get(columns[col])
+                images = data_images.get(columns[col])
+
+                sensor_range = 'medium'
+
                 if isinstance(value, float):
+                    sensor_range = WeatherStation.get_range(columns[col], value)
+
                     if value > 999.9:
                         value = int(value)
                     else:
                         value = round(value, 1)
+                elif isinstance(value, int):
+                    sensor_range = WeatherStation.get_range(columns[col], value)
+
                 elif value is None:
                     value = '-'
+
+                image = images.get(sensor_range)
 
                 # Asegúrate de que 'value' sea una cadena
                 if not isinstance(value, str):
@@ -478,17 +505,26 @@ class DisplayST7735_128x160():
                 unit = unit.center(5)
 
                 x = col * cell_width
-                y = row * cell_height + 9 + vertical_offset  # Añadiendo margen superior de 9px y centrando el texto verticalmente
+                y = row * cell_height + 9  # Añadiendo margen superior de 9px
+
+                # Ajuste para centrar texto verticalmente dentro de la celda
+                text_y = y + (
+                        cell_height - total_text_height) // 2  # Donde comienza el texto dentro de la celda
 
                 text_x = x + img_width + margin  # Ajustar la posición x en base al ancho de la imagen y el margen de manera uniforme para todas las columnas
 
-                text_pos_x = ceil(text_x // (font['w'] + (font[
-                                                               'font_padding'] *
-                                                     2))) + margin
+                text_pos_x = ceil(
+                    text_x // (font['w'] + (font['font_padding'] * 2))) + margin
 
+                # Replicar cálculo de posición de la imagen de grid_create
+                img_y = y + (cell_height - img_height) // 2
 
+                # Dibujar la nueva imagen en la misma posición
+                self.load_bmp(image, x, img_y, img_width, img_height)
+
+                # Ajustar posición vertical del texto usando text_y
                 self.printByPos(
-                    y // font['line_height'],
+                    text_y // font['line_height'],
                     text_pos_x,
                     value,
                     None,
@@ -496,7 +532,7 @@ class DisplayST7735_128x160():
                     bg_color
                 )
                 self.printByPos(
-                    (y // font['line_height']) + 1,
+                    (text_y // font['line_height']) + 1,
                     text_pos_x,
                     unit,
                     None,
