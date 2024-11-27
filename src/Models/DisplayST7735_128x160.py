@@ -19,8 +19,6 @@ class DisplayST7735_128x160():
     DISPLAY_WIDTH = 160
     DISPLAY_HEIGHT = 128
 
-    sensors_quantity = 10 # Cantida de sensores a mostrar
-
     locked = False
 
     # Colores por secciones (de más claro a más oscuro)
@@ -88,7 +86,7 @@ class DisplayST7735_128x160():
         },
     }
 
-    def __init__(self, spi, rst=9, ce=13, dc=12, offset=0, c_mode='RGB', btn_display_on=None, orientation=3, timeout=10, debug=False, color=0, background=0x000):
+    def __init__(self, spi, rst=9, ce=13, dc=12, offset=0, c_mode='RGB', btn_display_on=None, orientation=3, timeout=10, debug=False, color=0, background=0x000, pin_backlight=None):
         self.display = ST7735(spi, rst, ce, dc, offset, c_mode, color=color, background=background)
         self.display.set_rotation(orientation)
 
@@ -116,9 +114,15 @@ class DisplayST7735_128x160():
             self.DISPLAY_WIDTH = 128
             self.DISPLAY_HEIGHT = 160
 
-        if (btn_display_on is not None):
+        if btn_display_on is not None:
             self.btn_display_on = Pin(btn_display_on, Pin.IN, Pin.PULL_DOWN)
+            self.btn_display_on.irq(trigger=Pin.IRQ_RISING, handler=self.callbackDisplayOn)
 
+            sleep_ms(100)
+
+        if pin_backlight is not None:
+            self.pin_backlight = Pin(pin_backlight, Pin.OUT)
+            self.pin_backlight.on()
             sleep_ms(100)
 
     def reset(self):
@@ -169,14 +173,16 @@ class DisplayST7735_128x160():
         if diffMinutes > self.TIME_TO_OFF and self.display_on:
             self.display_on = False
 
-            # TODO: Apagar la pantalla, LED de pantalla debería ser controlado por un GPIO
+            # Apaga el led para la pantalla
+            if self.pin_backlight is not None:
+                self.pin_backlight.off()
 
-            self.cleanDisplay()
+            #self.cleanDisplay()
 
-        elif not self.display_on:
-            self.callbackDisplayOn()
+        #elif not self.display_on:
+        #    self.callbackDisplayOn()
 
-    def callbackDisplayOn(self):
+    def callbackDisplayOn(self, pin=None):
         """
         Callback para encender la pantalla, se dispara al pulsar el botón de encendido
         """
@@ -188,20 +194,36 @@ class DisplayST7735_128x160():
                 sleep_ms(10)
 
             try:
-                #self.reset()
-                # TODO: Encender backlight de la pantalla
-                self.reset()
                 self.display_on = True
+
+                # Enciende el led de la pantalla
+                if self.pin_backlight is not None:
+                    self.pin_backlight.on()
+
+                #self.reset()
                 self.display_on_at = time()
 
-                self.displayHeadInfo(0, 0)
-                self.displayFooterInfo()
-                self.tableCreate(self.sensors_quantity)
+                #self.displayHeadInfo(wifi_status=False)
+                #self.displayFooterInfo()
+                #sleep_ms(self.DELAY)
+                #self.grid_create()
             except Exception as e:
                 if self.DEBUG:
                     print('Error al encender la pantalla: {}'.format(e))
             finally:
                 self.locked = False
+
+        else:
+            # En caso de entrar con la pantalla encendida, la apago
+            self.display_on = False
+
+            if self.pin_backlight is not None:
+                self.pin_backlight.off()
+
+            #self.cleanDisplay()
+
+        sleep_ms(50)
+
 
     def printChar(self, x, y, ch, color, bg_color):
         if not self.display_on:
@@ -539,93 +561,3 @@ class DisplayST7735_128x160():
                     text_color,
                     bg_color
                 )
-
-    def tableCreate(self, sensorsQuantity = None, demo = False):
-        """
-        sensorsQuantity: integer, cantidad de sensores para la tabla
-        """
-
-        while self.locked:
-            if self.DEBUG:
-                print('Esperando a que se desbloquee la pantalla en tableCreate()')
-
-            sleep_ms(10)
-
-        if sensorsQuantity:
-            self.sensors_quantity = sensorsQuantity
-        else:
-            sensorsQuantity = self.sensors_quantity
-
-        font = self.FONTS['normal']  ## Fuente
-        font_width = font['w']  # Ancho de la letra
-
-        # Cantidad máxima de carácteres en la línea
-        max_line_chars = floor(self.DISPLAY_WIDTH / (font_width + font['font_padding']))
-
-        # Colores
-        colors = self.COLORS
-        color_th = colors['white']
-        color_th_bg = colors['blue4']
-        color_separator = colors['yellow1']
-
-        # Cabecera con los nombres de las columnas
-        self.printByPos(2, 0, '     Ic    Avg   Min   Max', max_line_chars, color=color_th, background=color_th_bg)
-
-        """
-        Dibujo de la línea de separación, 2 píxeles de alto al final del bloque
-        """
-        self.display.draw_block(0, (font['line_height'] * 2) - 2, self.DISPLAY_WIDTH, 2, color_separator)
-
-        current_line = 3
-        iterations = sensorsQuantity if sensorsQuantity <= 10 else 10
-
-        while iterations:
-            title = 'I' + str((sensorsQuantity - iterations) + 1)
-
-            if (iterations < 10):
-                title += ' '
-
-            if current_line % 2 == 0:
-                color = colors['yellow1'] #0xFFE0
-                background = colors['gray5'] #0x0000
-            else:
-                color = colors['yellow1'] #0xFFE0
-                background = colors['black'] #0x0000
-
-            self.printByPos(current_line, 0, title, max_line_chars, color=color, background=background)
-
-            current_line += 1
-            iterations -= 1
-
-        if demo:
-            for self.sensors_quantity in range(1, 11):
-                self.tableAddValue(self.sensors_quantity, 0.00, 0.00, 0.00, 0.00)
-
-
-    def tableAddValue(self, pos, current, avg, min, max):
-        """
-        pos: posición que ocupa el sensor, en el array de datos se establece
-        value: float de una posición (3 carácteres, ej: 1.2)
-        """
-
-        if pos > 10:
-            return
-
-        line = int(pos) + 2 # Número de línea en vertical dónde comenzamos, saltamos la cabecera
-
-        block_char_size = 5 # Cantidad de carácteres que ocupa un bloque
-        margin_chars_left = 4 # Margen izquierdo para comenzar a dibujar los bloques
-
-        colors = self.COLORS
-
-        if line % 2 == 0:
-            color = colors['green1'] #0x07E0
-            background = colors['gray5'] #0x0000
-        else:
-            color = colors['green1']
-            background = colors['black']
-
-        self.printByPos(line, margin_chars_left, current, block_char_size, color=color, background=background)
-        self.printByPos(line, margin_chars_left + block_char_size, avg, block_char_size, color=color, background=background)
-        self.printByPos(line, margin_chars_left + (block_char_size * 2), min, block_char_size, color=color, background=background)
-        self.printByPos(line, margin_chars_left + (block_char_size * 3), max, block_char_size, color=color, background=background)

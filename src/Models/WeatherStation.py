@@ -192,7 +192,8 @@ class WeatherStation:
         self.rpi = rpi
 
         # Sensor Bosh BME680
-        self.bme680 = BME680_I2C(i2c=rpi.i2c1, address=0x77, debug=False, temperature_offset=-1)
+        self.bme680 = BME680_I2C(i2c=rpi.i2c1, address=0x77, debug=False,
+                                 temperature_offset=-1, refresh_rate=10)
 
         # Sensor CO2 y TVOC
         self.c = CCS811(i2c=rpi.i2c0, addr=0x5A, debug=debug)

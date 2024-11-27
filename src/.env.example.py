@@ -19,7 +19,7 @@ DEVICE_ID = 0
 
 # Configuración de la pantalla.
 DISPLAY_ORIENTATION = 3
-DISPLAY_TIMEOUT = 10 # Minutos para apagar la pantalla automáticamente
+DISPLAY_TIMEOUT = 180 # Minutos para apagar la pantalla automáticamente
 
 # Indica si está en modo debug la aplicación
 DEBUG = False

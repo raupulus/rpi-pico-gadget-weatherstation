@@ -91,7 +91,9 @@ reset = Pin(9, Pin.OUT)
 spi1 = SPI(1, baudrate=8000000, polarity=0, phase=0,
            firstbit=SPI.MSB, sck=Pin(10), mosi=Pin(11), miso=None)
 
-display = DisplayST7735_128x160(spi1, rst=9, ce=13, dc=12, btn_display_on=8, orientation=env.DISPLAY_ORIENTATION, debug=env.DEBUG, timeout=env.DISPLAY_TIMEOUT)
+display = DisplayST7735_128x160(spi1, rst=9, ce=13, dc=12, btn_display_on=2,
+                                pin_backlight=3,
+                                orientation=env.DISPLAY_ORIENTATION, debug=env.DEBUG, timeout=env.DISPLAY_TIMEOUT)
 display.displayHeadInfo(wifi_status=rpi.wifi_status())
 display.displayFooterInfo()
 sleep_ms(display.DELAY)
@@ -143,6 +145,9 @@ def thread0 ():
     # Se leen todos los sensores
     ws.read_all()
 
+    # Compruebo si se enciende o apaga la pantalla
+    display.loop()
+
     if DEBUG:
         ws.debug()
 
@@ -193,4 +198,4 @@ while True:
         if env.DEBUG:
             print("Memoria después de liberar:", gc.mem_free())
     finally:
-        sleep_ms(5000)
+        sleep_ms(10000)
