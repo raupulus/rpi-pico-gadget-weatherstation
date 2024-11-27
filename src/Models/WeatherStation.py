@@ -1,6 +1,7 @@
 from Models.BH1750 import BH1750
 from Models.BME680 import BME680_I2C, BME680  # Import BME680 for air_quality reading
 from Models.CJMCU811 import CCS811
+from Models.Sonometer import Sonometer
 from Models.VEML6070 import VEML6070
 
 from time import sleep_ms
@@ -50,9 +51,9 @@ class WeatherStation:
             "high": [5, 11],
         },
         "sound": {
-            "low": [0, 50],
-            "medium": [50, 70],
-            "high": [70, 120],
+            "low": [-200, 40],
+            "medium": [40, 60],
+            "high": [60, 10000],
         },
     }
     data_images = {
@@ -203,6 +204,9 @@ class WeatherStation:
         # Sensor de luz
         self.light = BH1750(0x23, rpi.i2c1, debug=debug)
 
+        # Sonómetro
+        self.sound = Sonometer(rpi, 26, debug=debug, voltage_range=2, sensitivity_db=-50)
+
     @staticmethod
     def get_range (sensor_type: str, value: float) -> str:
         """
@@ -238,6 +242,16 @@ class WeatherStation:
         self.read_uv()
         self.read_light()
         self.read_c()
+        self.read_sound()
+
+    def read_sound(self):
+        if self.sound:
+            #self.data["sound"]["current"] = self.sound.get_db()
+            self.data["sound"]["current"] = self.sound.get_db_spl()
+            self.data["sound"]["reads"] = self.data["sound"]["reads"] + 1 if self.data["sound"]["reads"] else 1
+            self.data["sound"]["max"] = max(self.data["sound"]["max"], self.data["sound"]["current"]) if self.data["sound"]["max"] is not None else self.data["sound"]["current"]
+            self.data["sound"]["min"] = min(self.data["sound"]["min"], self.data["sound"]["current"]) if self.data["sound"]["min"] is not None else self.data["sound"]["current"]
+            self.data["sound"]["avg"] = ((self.data["sound"]["avg"] or 0) * (self.data["sound"]["reads"] - 1) + self.data["sound"]["current"]) / self.data["sound"]["reads"]
 
     def read_bme680(self):
         if self.bme680:
@@ -351,4 +365,6 @@ class WeatherStation:
         print('Lux:', self.light.measurement)
         print('UV:', self.data.get('uv').get('current'))
         print('Risk Level:', self.data.get('uv').get('risk_level'))
+        print('')
+        print('Sound db:', self.data.get('sound').get('current'))
         print('-------')

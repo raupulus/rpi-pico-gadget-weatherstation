@@ -46,14 +46,14 @@ rpi.led_on()
 sleep_ms(100)
 
 # Led 1 Encendido
-led1 = Pin(28, Pin.OUT)
+led1 = Pin(20, Pin.OUT)
 #led1.on()
 
 # Led 2 Indica ciclo de trabajo
-led2 = Pin(27, Pin.OUT)
+led2 = Pin(21, Pin.OUT)
 
 # Led 3 Indica subida a la API
-led3 = Pin(26, Pin.OUT)
+led3 = Pin(22, Pin.OUT)
 
 sleep_ms(100)
 
@@ -97,6 +97,19 @@ display.displayFooterInfo()
 sleep_ms(display.DELAY)
 #display.tableCreate(0, demo=True)
 display.grid_create()
+
+
+"""
+# Sonómetro Test
+from Models.Sonometer import Sonometer
+sound = Sonometer(rpi, 26, debug=True)
+while True:
+    rms = sound.calc_rms(20)
+    db = sound.get_db()
+    db_spl = sound.get_db_spl()
+    print(rms, db, db_spl)
+    sleep_ms(50)
+"""
 
 
 # Pausa preventiva al desarrollar (ajustar, pero si usas dos hilos puede ahorrar tiempo por bloqueos de hardware ante errores)
@@ -180,4 +193,4 @@ while True:
         if env.DEBUG:
             print("Memoria después de liberar:", gc.mem_free())
     finally:
-        sleep_ms(10000)
+        sleep_ms(5000)
