@@ -3,7 +3,7 @@
 #
 from math import floor, ceil
 from time import time, sleep_ms
-from Lib.ST7735_Small import ST7735
+from Lib.ST7735 import ST7735
 from machine import Pin
 
 from Models.WeatherStation import WeatherStation
