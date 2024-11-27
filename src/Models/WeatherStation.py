@@ -1,3 +1,4 @@
+from Models.BH1750 import BH1750
 from Models.BME680 import BME680_I2C, BME680  # Import BME680 for air_quality reading
 from Models.CJMCU811 import CCS811
 from Models.VEML6070 import VEML6070
@@ -7,15 +8,101 @@ import time
 
 
 class WeatherStation:
-    data = {
-        "air_quality": {
-            "max": None,
-            "min": None,
-            "avg": None,
-            "current": None,
-            "reads": None,
-            "unit": "%"
+    data_ranges = {
+        "temperature": {
+            "low": [0, 21],
+            "medium": [21, 25],
+            "high": [25, 1000],
         },
+        "humidity": {
+            "low": [0, 40],
+            "medium": [40, 65],
+            "high": [65, 100],
+        },
+        "pressure": {
+            "low": [0, 1008],
+            "medium": [1008, 1018],
+            "high": [1018, 10000],
+        },
+        "air_quality": {
+            "low": [0, 50],
+            "medium": [50, 70],
+            "high": [70, 100],
+        },
+        "co2": {
+            "low": [0, 500],
+            "medium": [500, 700],
+            "high": [700, 10000],
+        },
+        "tvoc": {
+            "low": [0, 65],
+            "medium": [65, 220],
+            "high": [220, 3000],
+        },
+        "light": {
+            "low": [0, 100],
+            "medium": [100, 2000],
+            "high": [2000, 100000],
+        },
+        "uv": {
+            "low": [0, 2],
+            "medium": [2, 5],
+            "high": [5, 11],
+        },
+        "sound": {
+            "low": [0, 50],
+            "medium": [50, 70],
+            "high": [70, 120],
+        },
+    }
+    data_images = {
+        "temperature": {
+            "low": "/images/temperature_low.rgb565",
+            "medium": "/images/temperature_medium.rgb565",
+            "high": "/images/temperature_high.rgb565",
+        },
+        "humidity": {
+            "low": "/images/humidity_low.rgb565",
+            "medium": "/images/humidity_medium.rgb565",
+            "high": "/images/humidity_high.rgb565",
+        },
+        "pressure": {
+            "low": "/images/pressure_low.rgb565",
+            "medium": "/images/pressure_medium.rgb565",
+            "high": "/images/pressure_high.rgb565",
+        },
+        "air_quality": {
+            "low": "/images/air_quality_low.rgb565",
+            "medium": "/images/air_quality_medium.rgb565",
+            "high": "/images/air_quality_high.rgb565",
+        },
+        "co2": {
+            "low": "/images/co2_low.rgb565",
+            "medium": "/images/co2_medium.rgb565",
+            "high": "/images/co2_high.rgb565",
+        },
+        "tvoc": {
+            "low": "/images/tvoc_low.rgb565",
+            "medium": "/images/tvoc_medium.rgb565",
+            "high": "/images/tvoc_high.rgb565",
+        },
+        "light": {
+            "low": "/images/light_low.rgb565",
+            "medium": "/images/light_medium.rgb565",
+            "high": "/images/light_high.rgb565",
+        },
+        "uv": {
+            "low": "/images/uv_low.rgb565",
+            "medium": "/images/uv_medium.rgb565",
+            "high": "/images/uv_high.rgb565",
+        },
+        "sound": {
+            "low": "/images/sound_low.rgb565",
+            "medium": "/images/sound_medium.rgb565",
+            "high": "/images/sound_high.rgb565",
+        },
+    }
+    data = {
         "temperature": {
             "max": None,
             "min": None,
@@ -48,6 +135,14 @@ class WeatherStation:
             "reads": None,
             "unit": "ohms"
         },
+        "air_quality": {
+            "max": None,
+            "min": None,
+            "avg": None,
+            "current": None,
+            "reads": None,
+            "unit": "%",
+        },
         "co2": {
             "max": None,
             "min": None,
@@ -64,6 +159,14 @@ class WeatherStation:
             "reads": None,
             "unit": "ppb"
         },
+        "light": {
+            "max": None,
+            "min": None,
+            "avg": None,
+            "current": None,
+            "reads": None,
+            "unit": "lum"
+        },
         "uv": {
             "max": None,
             "min": None,
@@ -72,14 +175,6 @@ class WeatherStation:
             "risk_level": None,
             "reads": None,
             "unit": "uv"
-        },
-        "light": {
-            "max": None,
-            "min": None,
-            "avg": None,
-            "current": None,
-            "reads": None,
-            "unit": "lux"
         },
         "sound": {
             "max": None,
@@ -96,7 +191,7 @@ class WeatherStation:
         self.rpi = rpi
 
         # Sensor Bosh BME680
-        self.bme680 = BME680_I2C(i2c=rpi.i2c0, address=0x77, debug=False, temperature_offset=-1)
+        self.bme680 = BME680_I2C(i2c=rpi.i2c1, address=0x77, debug=False, temperature_offset=-1)
 
         # Sensor CO2 y TVOC
         self.c = CCS811(i2c=rpi.i2c0, addr=0x5A, debug=debug)
@@ -106,7 +201,37 @@ class WeatherStation:
         self.uv = VEML6070(rpi.i2c1)
 
         # Sensor de luz
-        self.light = None
+        self.light = BH1750(0x23, rpi.i2c1, debug=debug)
+
+    @staticmethod
+    def get_range (sensor_type: str, value: float) -> str:
+        """
+        This method calculates and returns a string representation of a range based
+        on the input value and sensor type. The logic of determining the range is
+        implemented within the method. The returned string provides information
+        regarding the range that the value falls into.
+
+        :param sensor_type: The type of sensor for which the range has to be determined.
+        :type sensor_type: str
+        :param value: The input value for which the range has to be determined.
+        :type value: float
+        :return: A string representation of the range.
+        :rtype: str
+        """
+        if sensor_type not in WeatherStation.data_ranges:
+            raise ValueError(f"Unknown sensor type: {sensor_type}")
+
+        ranges = WeatherStation.data_ranges[sensor_type]
+
+        if ranges["low"][0] <= value <= ranges["low"][1]:
+            return "low"
+        elif ranges["medium"][0] <= value <= ranges["medium"][1]:
+            return "medium"
+        elif ranges["high"][0] <= value <= ranges["high"][1]:
+            return "high"
+        else:
+            raise ValueError(
+                f"Value {value} is out of range for sensor type {sensor_type}")
 
     def read_all(self):
         self.read_bme680()
@@ -194,7 +319,14 @@ class WeatherStation:
 
     def read_light(self):
         if self.light:
-            pass
+            lux = self.light.measurement
+            lumens = self.light.get_lumens(lux)
+
+            self.data["light"]["current"] = lumens
+            self.data["light"]["reads"] = self.data["light"]["reads"] + 1 if self.data["light"]["reads"] else 1
+            self.data["light"]["max"] = max(self.data["light"]["max"], lumens) if self.data["light"]["max"] is not None else lumens
+            self.data["light"]["min"] = min(self.data["light"]["min"], lumens) if self.data["light"]["min"] is not None else lumens
+            self.data["light"]["avg"] = ((self.data["light"]["avg"] or 0) * (self.data["light"]["reads"] - 1) + lumens) / self.data["light"]["reads"]
 
 
     def reset_stats(self):
@@ -215,6 +347,8 @@ class WeatherStation:
         print('CO2 level:', self.data.get('co2').get('current'))
         print('tVOC level:', self.data.get('tvoc').get('current'))
         print('')
+        print('Lumens', self.data.get('light').get('current'))
+        print('Lux:', self.light.measurement)
         print('UV:', self.data.get('uv').get('current'))
         print('Risk Level:', self.data.get('uv').get('risk_level'))
         print('-------')
