@@ -206,7 +206,8 @@ class WeatherStation:
         self.light = BH1750(0x23, rpi.i2c1, debug=debug)
 
         # Sonómetro
-        self.sound = Sonometer(rpi, 26, debug=debug, voltage_range=2, sensitivity_db=-50)
+        self.sound = Sonometer(rpi, 26, debug=debug, voltage_range=2,
+                               sensitivity_db=-42, voltage_offset=1.25)
 
     @staticmethod
     def get_range (sensor_type: str, value: float) -> str:

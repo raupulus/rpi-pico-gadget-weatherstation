@@ -3,7 +3,8 @@ import math
 
 
 class Sonometer:
-    def __init__ (self, rpi, pin=26, debug=False, voltage_range=1.0, sensitivity_db=-42):
+    def __init__ (self, rpi, pin=26, debug=False, voltage_range=2.0,
+                  sensitivity_db=-42, voltage_offset=1.25):
         """
         Initialize a microphone sensor class.
 
@@ -27,11 +28,12 @@ class Sonometer:
         self.rpi = rpi
         self.voltage_range = voltage_range
         self.sensitivity_db = sensitivity_db
+        self.offset_voltage = voltage_offset
 
         # Cola para almacenar las últimas 30 lecturas (mantiene solo las últimas 30)
         self.reads = []
 
-    def calc_rms (self, samples=20):
+    def calc_rms (self, samples=100):
         """
         Calcula el valor RMS (Root Mean Square) de la señal de entrada.
         :param samples: Número de muestras a promediar para obtener el RMS.
@@ -39,7 +41,7 @@ class Sonometer:
         """
         sum_squares = 0
         for _ in range(samples):
-            voltage = self.rpi.read_analog_input(self.pin)
+            voltage = self.rpi.read_analog_input(self.pin) - self.offset_voltage
             sum_squares += voltage ** 2  # Sumo los cuadrados de los voltajes
             time.sleep(0.01)  # Pausa pequeña entre lecturas
 
@@ -99,6 +101,11 @@ class Sonometer:
         Obtiene los valores de dB a partir de las 30 últimas lecturas almacenadas en `reads`.
         :return: Lista de los últimos 30 valores en dB.
         """
-        db_values = [self.get_db(rms) for rms in self.reads]
+        db_values = []
+
+        if self.reads:
+            avg_rms = sum(self.reads) / len(self.reads)
+            avg_db = self.get_db(avg_rms)
+            db_values.append(avg_db)
 
         return db_values

@@ -100,7 +100,6 @@ sleep_ms(display.DELAY)
 #display.tableCreate(0, demo=True)
 display.grid_create()
 
-
 """
 # Sonómetro Test
 from Models.Sonometer import Sonometer
@@ -112,7 +111,6 @@ while True:
     print(rms, db, db_spl)
     sleep_ms(50)
 """
-
 
 # Pausa preventiva al desarrollar (ajustar, pero si usas dos hilos puede ahorrar tiempo por bloqueos de hardware ante errores)
 sleep_ms(3000)
