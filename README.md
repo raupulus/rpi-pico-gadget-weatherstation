@@ -67,6 +67,20 @@ entorno que usamos como base **.env.example.py** cuando lo copies a env.py
 
 ---
 
+## Modelo para la caja 3D
+
+Puedes descargar mi diseño para este proyecto desde cualquiera de los siguientes
+perfiles:
+
+- Thingiverse: WIP -> Subida pendiente al concluir el proyecto por si hay 
+  modificaciones
+- Printables: WIP -> Subida pendiente al concluir el proyecto por si hay 
+  modificaciones
+- Makerworld: WIP -> Subida pendiente al concluir el proyecto por si hay 
+  modificaciones
+
+---
+
 A continuación tienes la descripción de los elementos utilizados en esta 
 estación meteorológica con Raspberry Pi Pico y MicroPython. 
 
