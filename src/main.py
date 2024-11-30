@@ -85,9 +85,6 @@ for i in range(10):
 ws.reset_stats()
 
 # Pantalla principal 128x160px
-cs = Pin(13, Pin.OUT)
-reset = Pin(9, Pin.OUT)
-
 spi1 = SPI(1, baudrate=8000000, polarity=0, phase=0,
            firstbit=SPI.MSB, sck=Pin(10), mosi=Pin(11), miso=None)
 
@@ -97,7 +94,6 @@ display = DisplayST7735_128x160(spi1, rst=9, ce=13, dc=12, btn_display_on=2,
 display.displayHeadInfo(wifi_status=rpi.wifi_status())
 display.displayFooterInfo()
 sleep_ms(display.DELAY)
-#display.tableCreate(0, demo=True)
 display.grid_create()
 
 """
@@ -115,16 +111,7 @@ while True:
 # Pausa preventiva al desarrollar (ajustar, pero si usas dos hilos puede ahorrar tiempo por bloqueos de hardware ante errores)
 sleep_ms(3000)
 
-def thread1 ():
-    """
-    Segundo hilo.
-    """
-
-    if env.DEBUG:
-        print('')
-        print('Inicia hilo principal (thread1)')
-
-
+# Almacena el último minuto para solo actualizar hora en el footer cuando cambia
 last_minute = 0
 
 def thread0 ():
@@ -159,9 +146,11 @@ def thread0 ():
 
     display.grid_update()
 
+    # Si la subida a la api está habilitada en las variables de entorno
     if API_UPLOAD:
         current_time = time.time()
 
+        # Comprueba para subir solo una vez cada minuto
         if current_time - api.last_upload_time >= 60:
             led3.on()
 
@@ -174,6 +163,7 @@ def thread0 ():
             if DEBUG:
                 print('Reiniciando estadísticas para nueva fase de trabajo')
 
+            # Reinicia las estadísticas tras la subida
             ws.reset_stats()
 
             led3.off()
