@@ -1,5 +1,5 @@
 # Wireless
-HOSTNAME = "RpiPicoW"
+HOSTNAME = "GADGET-WEATHER-STATION"
 AP_NAME = ""
 AP_PASS = ""
 
