@@ -279,14 +279,14 @@ class WeatherStation:
                 self.data["humidity"]["min"] = min(self.data["humidity"]["min"], self.bme680.humidity) if self.data["humidity"]["min"] is not None else self.bme680.humidity
                 self.data["humidity"]["avg"] = ((self.data["humidity"]["avg"] or 0) * (self.data["humidity"]["reads"] - 1) + self.bme680.humidity) / self.data["humidity"]["reads"]
 
-            if self.bme680.is_gas_ready() and self.bme680.gas is not None:
+            if self.bme680.is_gas_ready() and (self.bme680.gas is not None):
                 self.data["gas"]["current"] = self.bme680.gas
                 self.data["gas"]["reads"] = self.data["gas"]["reads"] + 1 if self.data["gas"]["reads"] else 1
                 self.data["gas"]["max"] = max(self.data["gas"]["max"], self.bme680.gas) if self.data["gas"]["max"] is not None else self.bme680.gas
                 self.data["gas"]["min"] = min(self.data["gas"]["min"], self.bme680.gas) if self.data["gas"]["min"] is not None else self.bme680.gas
                 self.data["gas"]["avg"] = ((self.data["gas"]["avg"] or 0) * (self.data["gas"]["reads"] - 1) + self.bme680.gas) / self.data["gas"]["reads"]
 
-            if self.bme680.is_gas_ready() and self.bme680.air_quality() is not None:
+            if self.bme680.is_gas_ready() and (self.bme680.air_quality() is not None):
                 self.data["air_quality"]["current"] = self.bme680.air_quality()
                 self.data["air_quality"]["reads"] = self.data["air_quality"]["reads"] + 1 if self.data["air_quality"]["reads"] else 1
                 self.data["air_quality"]["max"] = max(self.data["air_quality"]["max"], self.bme680.air_quality()) if self.data["air_quality"]["max"] is not None else self.bme680.air_quality()

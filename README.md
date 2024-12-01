@@ -16,7 +16,7 @@ Los datos mostrados son:
 
 Sitio web del autor: [https://raupulus.dev](https://raupulus.dev)
 
-![Imagen del Proyecto](docs/images/img1.jpg "Imagen Principal de raspberry pi pico w")
+![Imagen del Proyecto](docs/images/1.jpeg "Imagen Principal de raspberry pi pico w")
 
 Repository [https://gitlab.com/raupulus/rpi-pico-gadget-weatherstation](https://gitlab.com/raupulus/rpi-pico-gadget-weatherstation)
 
@@ -32,10 +32,10 @@ Puedes configurar algunos parámetros básicos en el archivo de variables de
 entorno que usamos como base **.env.example.py** cuando lo copies a env.py
 
 <p align="center">
-  <img src="docs/images/2.jpg" alt="Raspberry pi pico w image 1" height="150">
-  <img src="docs/images/3.jpg" alt="Raspberry pi pico w image 2" height="150">
-  <img src="docs/images/4.jpg" alt="Raspberry pi pico w image 3" height="150">
-  <img src="docs/images/scheme_thumbnail.jpg" alt="Raspberry pi pico w esquema de pines" height="150">
+  <img src="docs/images/1.jpeg" alt="Raspberry pi pico w image 1" height="150">
+  <img src="docs/images/2.jpeg" alt="Raspberry pi pico w image 2" height="150">
+  <img src="docs/images/3.jpeg" alt="Raspberry pi pico w image 3" height="150">
+  <img src="docs/images/4.jpeg" alt="Raspberry pi pico w esquema de pines"height="150">
 </p>
 
 ## Contenido del Repositorio
@@ -72,12 +72,9 @@ entorno que usamos como base **.env.example.py** cuando lo copies a env.py
 Puedes descargar mi diseño para este proyecto desde cualquiera de los siguientes
 perfiles:
 
-- Thingiverse: WIP -> Subida pendiente al concluir el proyecto por si hay 
-  modificaciones
-- Printables: WIP -> Subida pendiente al concluir el proyecto por si hay 
-  modificaciones
-- Makerworld: WIP -> Subida pendiente al concluir el proyecto por si hay 
-  modificaciones
+[Thingiverse](https://www.thingiverse.com/thing:6853725)
+[Printables](https://www.printables.com/model/1094255-project-raspberry-pi-pico-gadget-weather-station)
+[Makerworld](https://makerworld.com/es/models/840933#profileId-787000)
 
 ---
 

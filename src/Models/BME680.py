@@ -224,6 +224,7 @@ class BME680:
         var2 = ((self._adc_gas * 32768) - 16777216) + var1
         var3 = (_LOOKUP_TABLE_2[self._gas_range] * var1) / 512
         calc_gas_res = (var3 + (var2 / 2)) / var2
+
         return int(calc_gas_res)
 
     def is_gas_ready (self):
