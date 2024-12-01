@@ -35,49 +35,78 @@ class Sonometer:
 
     def calc_rms (self, samples=100):
         """
-        Calcula el valor RMS (Root Mean Square) de la señal de entrada.
+        Calcula el valor RMS de la señal de entrada.
         :param samples: Número de muestras a promediar para obtener el RMS.
         :return: El valor RMS de la señal.
         """
         sum_squares = 0
         for _ in range(samples):
             voltage = self.rpi.read_analog_input(self.pin) - self.offset_voltage
-            sum_squares += voltage ** 2  # Sumo los cuadrados de los voltajes
+            sum_squares += voltage ** 2
             time.sleep(0.01)  # Pausa pequeña entre lecturas
 
-        rms = math.sqrt(sum_squares / samples)  # Calcula el RMS
+        rms = math.sqrt(sum_squares / samples)
+
+        print("voltage: ", self.rpi.read_analog_input(self.pin))
 
         return rms
 
-    def get_db (self, rms_value=None):
+    def get_db(self, rms_value=None):
         """
         Convierte un valor RMS a decibelios (dB).
+        :param rms_value: Si no se proporciona, se calcula el RMS internamente.
         :return: El valor en decibelios.
         """
-
         if rms_value is None:
             rms_value = self.calc_rms()
 
-        # Convierto RMS a dB con respecto a un valor de referencia (self.voltage_range)
-        # Si el valor RMS es 0, evito la división por cero y retorno un mínimo.
+        # Evita log(0) en el cálculo
         if rms_value == 0:
-            return -100  # Un valor arbitrario muy bajo para no tener log(0)
+            return -100  # Valor arbitrario bajo para representar la ausencia de señal
 
-        # Calculo los dB con referencia al rango de voltage que detecta el mic.
-        return 20 * math.log10(rms_value / self.voltage_range)
+        # Convertir el valor RMS a decibelios
+        db_value = 20 * math.log10(rms_value / self.voltage_range)
+        return db_value
 
-    def get_db_spl (self):
+    def get_db_spl (self, samples=1024, interval=1.0):
         """
-        Convierte el voltaje RMS de la señal a dB SPL (Sound pressure level).
-        :param sensitivity_db: La sensibilidad del micrófono en dB a max voltage.
-        :return: El nivel de presión sonora en dB SPL.
+        Convierte el promedio de 1024 voltajes leídos a un nivel de presión sonora (dB SPL) usando una escala lineal.
+        El rango de voltajes va de 1.25V (0 dB SPL) a 3.33V (100 dB SPL).
+        :param samples: Número de muestras a tomar (por defecto 1024).
+        :param interval: Intervalo en segundos entre las muestras (por defecto 1 segundo).
+        :return: El nivel de presión sonora en dB SPL basado en el promedio de las muestras.
         """
-        rms_voltage = self.calc_rms()
+        max_voltage = 1.25
+        #total_voltage = 0.0
 
-        sensitive_db = abs(self.sensitivity_db)
+        # Tomar las muestras
+        start_time = time.time()  # Marca el tiempo de inicio
+        for _ in range(samples):
+            voltage = self.rpi.read_analog_input(self.pin)
 
-        # Cálculo de dB SPL
-        return (20 * math.log10(rms_voltage / self.voltage_range) + sensitive_db)
+            if voltage > max_voltage:
+                max_voltage = voltage
+
+            #total_voltage += voltage
+            time.sleep(interval / samples)  # Intervalo entre las muestras, 1 segundo dividido por el número de muestras
+
+        # Calcular el promedio de las muestras
+        #avg_voltage = total_voltage / samples
+
+        #print('AVG_Voltage:', avg_voltage)
+        #print('max_voltage:', max_voltage)
+
+        # Aseguramos que el voltaje esté dentro del rango esperado
+        if max_voltage < 1.25:
+            max_voltage = 1.25  # Limitar el valor mínimo a 1.25V
+        elif max_voltage > 3.33:
+            max_voltage = 3.33  # Limitar el valor máximo a 3.33V
+
+        # Cálculo lineal entre mínimo (0 dB SPL) y máximo (100 dB SPL)
+        db_spl = ((max_voltage - self.offset_voltage) / (
+                    3.33 - self.offset_voltage)) * 100
+
+        return db_spl
 
     def loop_read (self):
         """

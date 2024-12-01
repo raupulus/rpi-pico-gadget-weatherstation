@@ -88,6 +88,9 @@ class RpiPico:
         # Defino Pin para el LED integrado
         self.LED_INTEGRATED = Pin("LED", Pin.OUT)
 
+        # Enciendo el led al comenzar para ver claro que inicia al conectar
+        self.led_on()
+
         # Factor de conversión de 16 bits para corregir ADC.
         self.adc_conversion_factor = self.voltage_working / 65535
 

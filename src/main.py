@@ -2,10 +2,7 @@ import gc
 import time
 from time import sleep_ms
 from Models.Api import Api
-from Models.BME680 import BME680_I2C
-from Models.CJMCU811 import CCS811
 from Models.RpiPico import RpiPico
-from Models.VEML6070 import VEML6070
 from Models.DisplayST7735_128x160 import DisplayST7735_128x160
 from machine import Pin, SPI
 
@@ -41,13 +38,11 @@ if API_UPLOAD:
 else:
     rpi = RpiPico(debug=DEBUG)
 
-rpi.led_on()
-
 sleep_ms(100)
 
 # Led 1 Encendido
 led1 = Pin(20, Pin.OUT)
-#led1.on()
+led1.on()
 
 # Led 2 Indica ciclo de trabajo
 led2 = Pin(21, Pin.OUT)
@@ -96,15 +91,18 @@ display.displayFooterInfo()
 sleep_ms(display.DELAY)
 display.grid_create()
 
-"""
 # Sonómetro Test
+"""
 from Models.Sonometer import Sonometer
 sound = Sonometer(rpi, 26, debug=True)
 while True:
-    rms = sound.calc_rms(20)
+    rms = sound.calc_rms(100)
     db = sound.get_db()
     db_spl = sound.get_db_spl()
-    print(rms, db, db_spl)
+    print('RMS: ', rms)
+    print('DB: ', db)
+    print('DB SPL: ', db_spl)
+    print('')
     sleep_ms(50)
 """
 
@@ -186,4 +184,4 @@ while True:
         if env.DEBUG:
             print("Memoria después de liberar:", gc.mem_free())
     finally:
-        sleep_ms(10000)
+        sleep_ms(1000)

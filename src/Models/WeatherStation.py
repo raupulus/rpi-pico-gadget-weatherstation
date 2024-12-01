@@ -249,7 +249,8 @@ class WeatherStation:
     def read_sound(self):
         if self.sound:
             #self.data["sound"]["current"] = self.sound.get_db()
-            self.data["sound"]["current"] = self.sound.get_db_spl()
+            self.data["sound"]["current"] = self.sound.get_db_spl(samples=100,
+                                                                  interval=0.05)
             self.data["sound"]["reads"] = self.data["sound"]["reads"] + 1 if self.data["sound"]["reads"] else 1
             self.data["sound"]["max"] = max(self.data["sound"]["max"], self.data["sound"]["current"]) if self.data["sound"]["max"] is not None else self.data["sound"]["current"]
             self.data["sound"]["min"] = min(self.data["sound"]["min"], self.data["sound"]["current"]) if self.data["sound"]["min"] is not None else self.data["sound"]["current"]
@@ -368,5 +369,5 @@ class WeatherStation:
         print('UV:', self.data.get('uv').get('current'))
         print('Risk Level:', self.data.get('uv').get('risk_level'))
         print('')
-        print('Sound db:', self.data.get('sound').get('current'))
+        print('Sound dbl:', self.data.get('sound').get('current'))
         print('-------')

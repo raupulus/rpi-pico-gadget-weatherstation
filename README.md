@@ -231,11 +231,11 @@ eficiente en cuanto a tiempo de respuesta.
 |-----------------------|---------------------|
 | **RESET (9)**         | RESET               |
 | **CE (13)**           | CE                  |
-| **DC (12)**           | DC                  |
+| **DC/A0 (12)**        | DC                  |
 | **VCC (3.3V)**        | VCC                 |
 | **BL (3)**            | Led (backlight)     |
 | **SCK (10)**          | SCK (Serial Clock)  |
-| **MOSI (11)**         | MOSI (Data)         |
+| **MOSI/SDA (11)**     | MOSI (Data)         |
 | **VCC (3.3V)**        | VCC                 |
 | **GND**               | GND                 |
 
