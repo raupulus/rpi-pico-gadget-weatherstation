@@ -22,16 +22,10 @@ if API_UPLOAD:
     rpi = RpiPico(ssid=env.AP_NAME, password=env.AP_PASS, debug=DEBUG, alternatives_ap=env.ALTERNATIVES_AP, hostname=env.HOSTNAME)
 
     # Sincronizando reloj RTC
-    """
     sleep_ms(1000)
 
-    while not rpi.sync_rtc_time():
-
-        if env.DEBUG:
-            print('Intentando Obtener hora RTC de la API')
-
-        sleep_ms(30000)
-    """
+    # Intenta obtener timestamp para poner en hora el RTC
+    rpi.sync_rtc_time()
 
     # Preparo la instancia para la comunicación con la API
     api = Api(controller=rpi, url=env.API_URL, path=env.API_PATH, token=env.API_TOKEN, device_id=env.DEVICE_ID, debug=env.DEBUG)
@@ -152,6 +146,9 @@ def thread0 ():
         if current_time - api.last_upload_time >= 60:
             led3.on()
 
+            if not rpi.is_rtc_set:
+                rpi.sync_rtc_time()
+
             if DEBUG:
                 print('Subiendo datos a la API')
 
@@ -184,4 +181,4 @@ while True:
         if env.DEBUG:
             print("Memoria después de liberar:", gc.mem_free())
     finally:
-        sleep_ms(1000)
+        sleep_ms(10100)

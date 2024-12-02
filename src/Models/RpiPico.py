@@ -61,6 +61,8 @@ class RpiPico:
     # Almaceno batería externa si la configuramos
     external_battery = None
 
+    is_rtc_set = False
+
     def __init__ (self, ssid=None, password=None, debug=False, country="ES",
                   alternatives_ap=None, hostname="Rpi-Pico-W"):
         """
@@ -581,7 +583,7 @@ class RpiPico:
         """Configures the Raspberry Pi Pico's RTC with the current time obtained from the API."""
 
         if not self.wifi_is_connected():
-            return None
+            return False
 
         time_data = get_time_utc()  # Get the time from the API
 
@@ -597,11 +599,16 @@ class RpiPico:
             # Set the RTC (year, month, day, weekday, hour, minute, second, microseconds)
             rtc.datetime((year, month, day, day_of_week, hour, minute, second, 0))
 
-            print(f"RTC configured to: {year}-{month}-{day} {hour}:{minute}:{second}")
+            if self.DEBUG:
+                print(f"RTC configured to: {year}-{month}-{day} {hour}:{minute}:{second}")
+
+            self.is_rtc_set = True
 
             return True
         else:
-            print("Failed to sync RTC. No time data available.")
+            if self.DEBUG:
+                print("Failed to sync RTC. No time data available.")
+
             return False
 
     def get_rtc_utc_time(self):
