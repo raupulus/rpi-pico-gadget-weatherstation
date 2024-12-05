@@ -273,8 +273,8 @@ class BME680:
         # Limita el valor de IAQ a un rango de 0 a 100
         IAQ = min(max(IAQ, 0), 100)
 
-        # Para una mayor precisión, se puede invertir la escala si el valor de gas aumenta con la contaminación
-        return round(100 - IAQ)  # Una resistencia mayor indica peor calidad del aire
+        # Una resistencia mayor indica mejor calidad del aire
+        return round(IAQ)  # Resistencia mayor -> Mejor calidad del aire -> IAQ más alto
 
     def _perform_reading (self):
         """Realiza la lectura de los sensores BME680 y actualiza los valores internos."""
