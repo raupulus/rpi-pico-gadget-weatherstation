@@ -181,4 +181,4 @@ while True:
         if env.DEBUG:
             print("Memoria después de liberar:", gc.mem_free())
     finally:
-        sleep_ms(10100)
+        sleep_ms(1000)

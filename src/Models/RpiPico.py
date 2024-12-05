@@ -1,7 +1,7 @@
 from machine import ADC, Pin, SPI, I2C, RTC
 import network
+import ntptime
 from time import sleep_ms, mktime, localtime
-from Models.Api import get_time_utc
 import time
 
 # Constants
@@ -61,6 +61,7 @@ class RpiPico:
     # Almaceno batería externa si la configuramos
     external_battery = None
 
+    # Indica si se ha sincronizado el RTC interno
     is_rtc_set = False
 
     def __init__ (self, ssid=None, password=None, debug=False, country="ES",
@@ -585,29 +586,14 @@ class RpiPico:
         if not self.wifi_is_connected():
             return False
 
-        time_data = get_time_utc()  # Get the time from the API
-
-        if time_data:
-            year, month, day, hour, minute, second, day_of_week, day_of_year, week_number = time_data
-
-            if self.DEBUG:
-                print(
-                    f"Time obtained from the API: {year}-{month}-{day} {hour}:{minute}:{second}")
-
-            rtc = RTC()
-
-            # Set the RTC (year, month, day, weekday, hour, minute, second, microseconds)
-            rtc.datetime((year, month, day, day_of_week, hour, minute, second, 0))
-
-            if self.DEBUG:
-                print(f"RTC configured to: {year}-{month}-{day} {hour}:{minute}:{second}")
+        try:
+            ntptime.settime()
 
             self.is_rtc_set = True
-
             return True
-        else:
+        except Exception as e:
             if self.DEBUG:
-                print("Failed to sync RTC. No time data available.")
+                print(f"Error sync time: {e}")
 
             return False
 
